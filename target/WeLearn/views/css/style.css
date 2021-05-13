@@ -1,0 +1,146 @@
+@charset "ISO-8859-1";
+body{
+	margin: 0;
+	background: rgb(212,212,226);
+	background: linear-gradient(90deg, rgba(212,212,226,1) 47%, rgba(0,212,255,1) 97%, rgba(2,0,36,1) 100%);
+	}
+table{
+	border:none;
+	border-spacing:20px;
+	text-align:center;
+	}
+	
+	td{
+	border:none;
+	}
+	
+	.login-btn{
+	padding:5px;
+	margin-left:30%;
+	border-radius:20px;
+	}
+	.title{
+	text-align:center;
+	}
+	
+	.main-container{
+	width:50%;
+	border:1px solid black;
+	box-shadow:0 0 10px;
+	margin:5% auto;
+	padding:10px;
+	}
+     
+	label{
+	font-weight:bold;
+	}
+	
+	.logout-btn{
+	padding:5px;
+	margin-left:70%;
+	border-radius:20px;
+	}
+	
+	input, select, textarea {
+	margin-bottom:10px;
+	}
+	
+	.btn{
+	margin-top:10px;
+	padding:5px;
+	}
+	
+	.header{
+	width:100%;
+	display:inline-block;
+	}
+	
+	.container{
+	display:inline-block;
+	position:relative;
+	width:80%;
+	margin-left:10%;
+	padding:10px;
+	margin-top:2%;
+	background-color:#b3e7ff;
+	box-shadow: 5px 5px 20px;
+	}
+	
+	.confirm-course-container{
+	margin:auto;
+	paddding:10px;
+	display:block;
+	text-align:center;
+}
+
+.active{
+	color: #ffeeff !important;
+	text-shadow: 0 0 1px #fff;	
+}
+
+
+.topnav {
+  overflow: hidden;
+  background-color: #333;
+  display:block;
+  width:100%;
+}
+
+.topnav a {
+  float: left;
+  display: block;
+  color: #f2f2f2;
+  text-align: center;
+  padding: 14px 16px;
+  text-decoration: none;
+  
+}
+
+.error{
+	color:red;
+	font-size:13px;
+}
+
+.tooltip {
+  position: relative;
+  display: inline-block;
+  color:white;
+  background-color:black;
+  border-radius:20px;
+  padding:3px;
+  font-size:10px;
+  bottom:4px;
+}
+
+.tooltip .tooltiptext {
+  visibility: hidden;
+  width: 120px;
+  background-color: #555;
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 5px 0;
+  position: absolute;
+  z-index: 1;
+  bottom: 125%;
+  left: 50%;
+  margin-left: -60px;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.tooltip .tooltiptext::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: #555 transparent transparent transparent;
+}
+
+.tooltip:hover .tooltiptext {
+  visibility: visible;
+  opacity: 1;
+}
