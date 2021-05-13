@@ -164,12 +164,12 @@ public class CourseController {
 	@PostMapping("/user/course-uneroll")
 	public ModelAndView unerollCourse(HttpServletRequest req) {
 		String email = (String) req.getSession(false).getAttribute("email");
-		int courseId = Integer.parseInt(req.getParameter("selectedCourse"));
-		Course course = courseInterface.unenrollCourse(email, courseId);
+		long courseId = Long.parseLong(req.getParameter("selectedCourse"));
+		Entity course = courseInterface.unenrollCourse(email, courseId);
 		if (course!=null) {
-			ModelAndView mv = new ModelAndView("redirect:/user/course-unenrolled-success/"+course.getName());
+			ModelAndView mv = new ModelAndView("redirect:/user/course-unenrolled-success/"+course.getProperty("courseName"));
 			mv.addObject("course",course);
-			System.out.println(course.getName());
+			System.out.println(course);
 			return mv;
 		}
 		else {
@@ -191,33 +191,38 @@ public class CourseController {
 	@GetMapping("/user/update-course")
 	public ModelAndView  showUpdateCourse(HttpServletRequest req) {
 		ModelAndView mv = new ModelAndView();
-		int courseId = Integer.parseInt(req.getParameter("selectedCourse"));
+		long courseId = Long.parseLong(req.getParameter("selectedCourse"));
 		mv.setViewName("/user/courseUpdate");
 		mv.addObject("course", courseInterface.getCourseDetails(courseId));		
 		return mv;
 	}
 	
 	@PostMapping("/user/update-course")
-	public void updateCourse(HttpServletRequest req) {
+	public ModelAndView updateCourse(HttpServletRequest req) {
 		String name = req.getParameter("courseName");
 		String price = req.getParameter("price");
 		String chapters = req.getParameter("chapters");
 		String description = req.getParameter("courseDescription");
-		int courseId = Integer.parseInt(req.getParameter("courseId"));
+		long courseId = Long.parseLong(req.getParameter("courseId"));
+		HttpSession session  = req.getSession(false);
+		String email = (String)session.getAttribute("email");
 		if(courseInterface.checkCourseName(name)) {
-			boolean isUpdated = courseInterface.updateCourse(name, price, description, chapters, courseId);
+			boolean isUpdated = courseInterface.updateCourse(name, price, description, chapters, courseId,email);
 			if (isUpdated==true) {
 				ModelAndView mv = new ModelAndView();
 				mv.setViewName("/user/courseUpdateSuccess");
-				
+				mv.addObject("name",name);
+				return mv;
 			}
-			else {
-				System.out.print("no");
-			}
-		}
-		else {
 			
 		}
+		else {
+			ModelAndView mv = new ModelAndView();
+			mv.setViewName("/user/view-course-created-by-you");
+			return mv;
+			
+		}
+		return null;
 		
 	}
 }

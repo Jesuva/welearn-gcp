@@ -23,8 +23,11 @@ import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
 import com.google.appengine.api.datastore.Entity;
 import com.google.appengine.api.datastore.EntityNotFoundException;
+import com.google.appengine.api.datastore.FetchOptions;
 import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.KeyFactory;
+import com.google.appengine.api.datastore.Query;
+import com.google.appengine.api.datastore.Query.FilterOperator;
 import com.welearn.mapper.LoginMapper;
 import com.welearn.mapper.UserMapper;
 import com.welearn.model.Login;
@@ -42,21 +45,23 @@ public class UserDao extends JdbcDaoSupport implements UserInterface {
 	        this.setDataSource(datasource);
 	    }
 	 
-	 public Login findUser(String email,String password) {
+	 public Entity findUser(String email,String password) {
 		 	try {
 				MessageDigest sha2 = MessageDigest.getInstance("SHA-256");
 				sha2.update(password.getBytes());
 				BigInteger hash = new BigInteger(1,sha2.digest());
 				String HashPassword = hash.toString(16);
-				
-		        String sql = "Select u.userName,u.email,u.password "//
-		                + " from users u where u.email = ? and u.password = ? ";
-		 
-		        Object[] params = new Object[] { email,HashPassword };
-		        LoginMapper mapper = new LoginMapper();
-		        Login userInfo = this.getJdbcTemplate().queryForObject(sql, params, mapper);
-		       
-	            return userInfo;
+				Query query = new Query("User").addFilter("email",FilterOperator.EQUAL,email)
+						.addFilter("password", FilterOperator.EQUAL, HashPassword);
+				Entity user = 
+	                   datastore.prepare(query).asSingleEntity();
+				System.out.println(user);
+				if(user!=null) {
+					return user;
+				}
+				else {
+					return null;
+				}
 			} 
 		 			 	
 		 	catch (Exception e) {
@@ -76,15 +81,12 @@ public class UserDao extends JdbcDaoSupport implements UserInterface {
 			 	sha2.update(email.getBytes());
 			 	BigInteger mailHash = new BigInteger(1,sha2.digest());
 			 	String userId = mailHash.toString(16);
-			 	Entity user = new Entity("User",email);
-			    user.setProperty("userId", email);
+			 	Entity user = new Entity("User",userId);
+			    user.setProperty("userId", userId);
 			    user.setProperty("name",name);
 			    user.setProperty("email", email);
 			    user.setProperty("password", HashPassword);
 			    datastore.put(user);
-			 String sql = "insert into users (`userId`, `userName`, `email`, `password`) VALUES (?,?,?,?)";
-			 Object[] params = new Object[] {userId,name,email,HashPassword};
-			 int userInfo = this.getJdbcTemplate().update(sql, params);
 		 }
 		 catch(Exception e) {
 			 logger.warning(e.getMessage());
@@ -95,12 +97,13 @@ public class UserDao extends JdbcDaoSupport implements UserInterface {
 	public boolean checkUserMail(String email) {
 		
 		try {
-			String sql = "Select count(*) "//
-	                + " from users u where u.email = ?";
-	 
-	        Object[] params = new Object[] { email};
-	        int userCount = this.getJdbcTemplate().queryForObject(sql, params, Integer.class);
-            if(userCount==0) {
+			Query validCourseName = new Query("User").
+				    setFilter(new Query.FilterPredicate("email", 
+				                  Query.FilterOperator.EQUAL,
+				                  email)
+				    ).setKeysOnly();
+				Entity emailTaken = datastore.prepare(validCourseName).asSingleEntity();
+            if(emailTaken==null) {
             	return true;
             }
 			

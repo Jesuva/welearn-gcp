@@ -60,13 +60,13 @@ public class AuthenticationController {
 	
 	@PostMapping("/login")
 	public ModelAndView login(@RequestParam("userMail") String email,@RequestParam("userPassword") String password,HttpServletRequest request ) {
-		Login userlogin = userInterface.findUser(email,password);
+		Entity userlogin = userInterface.findUser(email,password);
 		ModelAndView mv = new ModelAndView();
 		mv.clear();
 		if(userlogin!=null) {
 			HttpSession session =request.getSession();
-			session.setAttribute("name",userlogin.getName());
-			session.setAttribute("email", userlogin.getEmail());
+			session.setAttribute("name",userlogin.getProperty("name"));
+			session.setAttribute("email", userlogin.getProperty("email"));
 			logger.info("User Logged In");
 			return new ModelAndView("redirect:/user/enrollcourse");
 			

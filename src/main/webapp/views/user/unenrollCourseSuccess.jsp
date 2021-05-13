@@ -18,7 +18,7 @@
 <h3>Hi ${sessionScope.name } !<br>
 You have unenrolled from a  course titled as " ${name } " from your Learning List!</h3>
 <h1>Enroll in some other Course!Happy Learning!</h1>
-<a href="/welearn/user/enrollcourse"><button>View All Course</button></a>
+<a href="/user/enrollcourse"><button>View All Course</button></a>
 </div>
 </div>
 </body>

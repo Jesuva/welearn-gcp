@@ -3,6 +3,7 @@ package com.welearn.services;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -21,6 +22,7 @@ import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.KeyFactory;
 import com.google.appengine.api.datastore.PreparedQuery;
 import com.google.appengine.api.datastore.Query;
+import com.google.appengine.api.datastore.Query.CompositeFilterOperator;
 import com.google.appengine.api.datastore.Query.FilterOperator;
 import com.welearn.dao.CourseInterface;
 import com.welearn.mapper.CourseMapper;
@@ -60,34 +62,66 @@ public class CourseServices extends JdbcDaoSupport implements CourseInterface {
 			sha2.update(email.getBytes());
 			BigInteger hash = new BigInteger(1,sha2.digest());
 			String userId = hash.toString(16);
+			List<Long> enrolledCoursesId = new ArrayList<Long>();
+			List<Long> availableCoursesId = new ArrayList<Long>();
+			
+			Query q = new Query("CourseEnrollment").addFilter("userId",FilterOperator.EQUAL,userId)
+					.addFilter("isActive", FilterOperator.EQUAL, true);
+			List<Entity> course = 
+                   datastore.prepare(q).asList(FetchOptions.Builder.withLimit(10));
+			
+			
+			for(Entity e:course) {
+				enrolledCoursesId.add((long) e.getProperty("courseId"));
+			}
+			
+			
 			Query query = new Query("Course");
 			List<Entity> courses = 
                    datastore.prepare(query).asList(FetchOptions.Builder.withLimit(10));
-//			String sql = "SELECT * FROM courses where courseId Not in (select course_id from course_enrollment where user_id=?);";
-//			Object[] params = new Object[] { userId };
-//	        CourseMapper mapper = new CourseMapper();
-//	        List<Course> courseInfo = this.getJdbcTemplate().query(sql, params, mapper);
 			
-            return courses;
+			
+			List<Entity> availableCourses = new ArrayList<Entity>();
+			
+			for(Entity ac: courses) {
+				if(enrolledCoursesId.contains((long) ac.getKey().getId())) {
+					
+				}
+				else {
+					availableCourses.add(ac);
+				}
+				
+			}
+			
+            return availableCourses;
 			
 		}
 		catch(Exception e) {
+			e.printStackTrace();
 			logger.warning(e.getMessage());
 		}
 		return null;
 	}
 	
-	public List<Course> getAllEnrolledCourses(String email){
+	public List<Entity> getAllEnrolledCourses(String email){
 		try {
 			MessageDigest sha2 = MessageDigest.getInstance("SHA-256");
 			sha2.update(email.getBytes());
 			BigInteger hash = new BigInteger(1,sha2.digest());
 			String userId = hash.toString(16);
-			String sql = "SELECT * FROM courses where courseId IN (select course_id from course_enrollment where user_id=?);";
-			Object[] params = new Object[] { userId };
-	        CourseMapper mapper = new CourseMapper();
-	        List<Course> courseInfo = this.getJdbcTemplate().query(sql, params, mapper);
-            return courseInfo;
+			
+			Query query = new Query("CourseEnrollment").addFilter("userId",FilterOperator.EQUAL,userId)
+					.addFilter("isActive", FilterOperator.EQUAL, true);
+			List<Entity> courses = 
+                   datastore.prepare(query).asList(FetchOptions.Builder.withLimit(10));
+			List<Entity> coursesInfo = new ArrayList<Entity>();
+			for(Entity e: courses) {
+				Entity thisEntity = getCourseDetails((long) e.getProperty("courseId"));
+				coursesInfo.add(thisEntity);
+				thisEntity = null;
+			}
+			return coursesInfo;
+			
 			
 		}
 		catch(Exception e) {
@@ -109,14 +143,7 @@ public class CourseServices extends JdbcDaoSupport implements CourseInterface {
 			course.setProperty("price", price);
 			course.setProperty("created_by", userId);
 			datastore.put(course);
-			String sql = "INSERT INTO `welearn`.`courses` (`courseName`, `courseDescription`, `chapters`, `coursePrice`, `created_by`) VALUES (?,?,?,?,?);\r\n"
-					+ ";";
-			Object[] params = new Object[] {name,description,chapters,price,userId};
-			int addCourse = this.getJdbcTemplate().update(sql, params);
-			if(addCourse!=0) {
-				return true;
-			}
-			return false;
+			return true;
 		}
 		catch(Exception e) {
 			e.printStackTrace();
@@ -125,17 +152,20 @@ public class CourseServices extends JdbcDaoSupport implements CourseInterface {
 		}
 	}
 	
-	public boolean updateCourse(String name,String price,String description ,String chapters,int courseId) {
+	public boolean updateCourse(String name,String price,String description ,String chapters,long courseId,String email) {
 		try {
-			
-			String sql = "UPDATE `welearn`.`courses` SET `courseName` = ?,`coursePrice` = ?,`chapters`=?,`courseDescription`=? WHERE (`courseId` = ?);";
-			int updateCourse = this.getJdbcTemplate().update(sql,name,price,chapters,description,courseId);
-			if(updateCourse!=0) {
-				return true;
-			}
-			else {
-				return false;
-			}
+			MessageDigest sha2 = MessageDigest.getInstance("SHA-256");
+			sha2.update(email.getBytes());
+			BigInteger hash = new BigInteger(1,sha2.digest());
+			String userId = hash.toString(16);
+			Entity course = new Entity("Course",courseId);
+			course.setProperty("courseName", name);
+			course.setProperty("description", description);
+			course.setProperty("chapters", chapters);
+			course.setProperty("price", price);
+			course.setProperty("created_by", userId);
+			datastore.put(course);
+			return true;
 		}
 		catch(Exception e) {
 			
@@ -150,20 +180,16 @@ public class CourseServices extends JdbcDaoSupport implements CourseInterface {
 			                  name)
 			    ).setKeysOnly();
 			Entity courseEntity = datastore.prepare(validCourseName).asSingleEntity();
+			System.out.print(courseEntity);
 		if (courseEntity==null) {
 			System.out.print("null");
+			return true;
 		}
 		else {
 			System.out.print("not null");
-		}
-		String sql ="SELECT count(*) FROM welearn.courses where courseName=?;";
-		Object[] params = new Object[] {name};
-		int courseCount = this.getJdbcTemplate().queryForObject(sql, params,Integer.class);
-		if(courseCount==0) {
-			return true;
+			return false;
 		}
 		
-		return false;
 	}
 
 	public Entity getCourseDetails(long courseId) {
@@ -174,21 +200,22 @@ public class CourseServices extends JdbcDaoSupport implements CourseInterface {
 			                  courseKey)
 			    );
 			Entity anyentity = datastore.prepare(validuserquery).asSingleEntity();
-		System.out.println(anyentity);
+		
 		return anyentity;
 		
 	}
 	
-	public List<Course> getCourseCreatedByUser(String name){
+	public List<Entity> getCourseCreatedByUser(String name){
 		try {
 			MessageDigest sha2 = MessageDigest.getInstance("SHA-256");
 			sha2.update(name.getBytes());
 			BigInteger hash = new BigInteger(1,sha2.digest());
 			String userId = hash.toString(16);
-			String sql = "select * from courses where created_by=?;";
-			Object[] params = new Object[] {userId};
-			CourseMapper mapper = new CourseMapper();
-			List<Course> courses = this.getJdbcTemplate().query(sql, params,mapper);
+			
+			Query query = new Query("Course").addFilter("created_by",FilterOperator.EQUAL,userId);
+			List<Entity> courses = 
+                   datastore.prepare(query).asList(FetchOptions.Builder.withLimit(10));
+			
 			return courses;
 			
 		} catch (Exception e) {
@@ -218,32 +245,30 @@ public class CourseServices extends JdbcDaoSupport implements CourseInterface {
 		}
 	}
 	
-	public Course unenrollCourse(String email, int courseId) {
+	public Entity unenrollCourse(String email, long courseId) {
 		try {
+			
 			MessageDigest sha2 = MessageDigest.getInstance("SHA-256");
 			sha2.update(email.getBytes());
 			BigInteger hash = new BigInteger(1,sha2.digest());
 			String userId = hash.toString(16);
-			String sql = "INSERT INTO `welearn`.`course_unenrollment` (`user_id`,`course_id`) VALUES (?, ?);\r\n"
-					+ "";
-			Object[] params = new Object[] {userId,courseId};
-			int isUnenrolled = this.getJdbcTemplate().update(sql,params);
-			if (isUnenrolled!=0) {
-				String sql3 = "DELETE FROM `course_enrollment` WHERE (`user_id` = ? and `course_id`=?);";
-				Object[] params3 = new Object[] {userId,courseId};
-				this.getJdbcTemplate().update(sql3,params3);
-				String sql2 = "select * from `courses` where `courseId`=?;";
-				Object[] thisParams = new Object[] {courseId};
-				CourseMapper mapper = new CourseMapper();
-				Course course = this.getJdbcTemplate().queryForObject(sql2, thisParams,mapper);
-				return course;
-			}
-			else {
-				logger.warning("update query not working");
-				return null;
-			}
+			Query q =
+			      new Query("CourseEnrollment")
+			          .setFilter(
+			              CompositeFilterOperator.and(
+			                  new Query.FilterPredicate("userId", FilterOperator.EQUAL, userId),
+			                  new Query.FilterPredicate("courseId", FilterOperator.EQUAL, courseId)));
+			Entity result = datastore.prepare(q).asSingleEntity();
+			Entity unenroll = new Entity("CourseEnrollment",result.getKey().getId());
+			unenroll.setProperty("userId", userId);
+			unenroll.setProperty("courseId", courseId);
+			unenroll.setProperty("isActive", false);
+			datastore.put(unenroll);
+			Entity unenrollCourseInfo = getCourseDetails(courseId);
+			return unenrollCourseInfo;
 		}
 		catch(Exception e) {
+			e.printStackTrace();
 			logger.warning(e.getMessage());
 			return null;
 		}

@@ -16,9 +16,9 @@
 <div class="confirm-course-container">
 <h4>Thanks for Updating the Course!</h4>
 <h3>Hi ${sessionScope.name } !<br>
-Thanks for Updating the course titled as " ${param.courseTitle } "!</h3>
+Thanks for Updating the course titled as " ${name } "!</h3>
 <h1>Happy Teaching!</h1>
-<a href="../user/course-created-by-you"><button>Back</button></a>
+<a href="../user/view-course-created-by-you"><button>Back</button></a>
 </div>
 </div>
 </body>

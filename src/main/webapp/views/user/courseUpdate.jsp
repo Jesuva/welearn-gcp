@@ -18,23 +18,23 @@
 <table>
 <tr>
 <td><label>Course Name</label></td>
-<td><input type="text" name="courseName" value="${course.name }"required></td>
+<td><input type="text" name="courseName" value="${course.properties.courseName }"required></td>
 <td><p class="error"> ${courseNameError }</p></td>
 </tr>
 <tr>
 <td><label>Chapters</label></td>
-<td><input type="number" min="1" name="chapters" value="${course.chapters }" required></td>
+<td><input type="number" min="1" name="chapters" value="${course.properties.chapters }" required></td>
 </tr>
 <tr>
 <td><label>Price</label></td>
-<td><input type="number" min="100" name="price" value="${course.price }" required></td>
+<td><input type="number" min="100" name="price" value="${course.properties.price }" required></td>
 </tr>
 <tr>
 <td><label>Course Description</label></td>
-<td><textarea style="resize:none" name="courseDescription" required>${course.description} </textarea></td>
+<td><textarea style="resize:none" name="courseDescription" required>${course.properties.description} </textarea></td>
 </tr>
 </table>
-<input type="hidden" value="${course.courseId }" name="courseId">
+<input type="hidden" value="${course.getKey().getId() }" name="courseId">
 <input type="submit" value="Update Course" style="margin-left:25%;">
 </form>
 <a href="../user/view-course-created-by-you" style="float:right;"><button>Back</button></a>

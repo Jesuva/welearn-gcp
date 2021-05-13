@@ -26,12 +26,12 @@
 <c:forEach var="course" items="${courses }" varStatus="counter">
 <tr>
 <td>${counter.count }</td>
-<td>${course.name }</td>
-<td>${course.description }</td>
-<td>${course.chapters }</td>
-<td>${course.price }</td>
-<td><a href="../user/${course.name }">View Details</a></td>
-<td><button type="submit" name="selectedCourse" value="${course.courseId }">Edit</button></td>
+<td>${course.properties.courseName }</td>
+<td>${course.properties.description }</td>
+<td>${course.properties.chapters }</td>
+<td>${course.properties.price }</td>
+<td><a href="../user/${course.properties.courseName }">View Details</a></td>
+<td><button type="submit" name="selectedCourse" value="${course.getKey().getId() }">Edit</button></td>
 </tr>
 </c:forEach>
 </table>
