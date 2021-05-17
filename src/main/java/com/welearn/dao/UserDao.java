@@ -28,6 +28,7 @@ import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.KeyFactory;
 import com.google.appengine.api.datastore.Query;
 import com.google.appengine.api.datastore.Query.FilterOperator;
+import com.google.appengine.api.datastore.Transaction;
 import com.welearn.mapper.LoginMapper;
 import com.welearn.mapper.UserMapper;
 import com.welearn.model.Login;
@@ -55,7 +56,6 @@ public class UserDao extends JdbcDaoSupport implements UserInterface {
 						.addFilter("password", FilterOperator.EQUAL, HashPassword);
 				Entity user = 
 	                   datastore.prepare(query).asSingleEntity();
-				System.out.println(user);
 				if(user!=null) {
 					return user;
 				}
@@ -72,7 +72,7 @@ public class UserDao extends JdbcDaoSupport implements UserInterface {
 	    }
 	 
 	 public void addUser(String name,String email,String password) {
-		 
+		 Transaction transaction = datastore.beginTransaction();
 		 try {
 				MessageDigest sha2 = MessageDigest.getInstance("SHA-256");
 				sha2.update(password.getBytes());
@@ -86,10 +86,17 @@ public class UserDao extends JdbcDaoSupport implements UserInterface {
 			    user.setProperty("name",name);
 			    user.setProperty("email", email);
 			    user.setProperty("password", HashPassword);
-			    datastore.put(user);
+			    datastore.put(transaction,user);
+			    transaction.commit();
 		 }
 		 catch(Exception e) {
 			 logger.warning(e.getMessage());
+		 }
+		 finally {
+			 if(transaction.isActive()) {
+				 transaction.rollback();
+				 logger.warning("Add user function rolled back.");
+			 }
 		 }
 		   
 	 }

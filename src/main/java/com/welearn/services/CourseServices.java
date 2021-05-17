@@ -180,7 +180,6 @@ public class CourseServices extends JdbcDaoSupport implements CourseInterface {
 			                  name)
 			    ).setKeysOnly();
 			Entity courseEntity = datastore.prepare(validCourseName).asSingleEntity();
-			System.out.print(courseEntity);
 		if (courseEntity==null) {
 			System.out.print("null");
 			return true;

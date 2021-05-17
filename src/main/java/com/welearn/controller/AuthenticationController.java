@@ -94,7 +94,6 @@ public class AuthenticationController {
 		String name = req.getParameter("name");
 		String email = req.getParameter("email");
 		String password = req.getParameter("password");
-		System.out.println(br.hasErrors());
 		ModelAndView mv = new ModelAndView();
 		boolean emailCheck = Pattern.matches("^[a-zA-Z0-9+_.-]+@[a-zA-Z0-9.-]+$",email);
 		boolean passwordCheck = Pattern.matches("^(?=.*[a-z]{2})(?=.*[A-Z]{2})(?=.*[!@#&()�[{}]:;',?/*~$^+=<>]{2}).{6,20}$", password);
