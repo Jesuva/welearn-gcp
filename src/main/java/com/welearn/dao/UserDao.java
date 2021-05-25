@@ -46,7 +46,7 @@ public class UserDao extends JdbcDaoSupport implements UserInterface {
 	        this.setDataSource(datasource);
 	    }
 	 
-	 public Entity findUser(String email,String password) {
+	 public boolean findUser(String email,String password) {
 		 	try {
 				MessageDigest sha2 = MessageDigest.getInstance("SHA-256");
 				sha2.update(password.getBytes());
@@ -56,17 +56,18 @@ public class UserDao extends JdbcDaoSupport implements UserInterface {
 						.addFilter("password", FilterOperator.EQUAL, HashPassword);
 				Entity user = 
 	                   datastore.prepare(query).asSingleEntity();
+				
 				if(user!=null) {
-					return user;
+					return true;
 				}
 				else {
-					return null;
+					return false;
 				}
 			} 
 		 			 	
 		 	catch (Exception e) {
 				logger.warning(e.getMessage());
-				return null;
+				return false;
 			}
 		 	 
 	    }

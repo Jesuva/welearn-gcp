@@ -40,7 +40,12 @@ public class AuthenticationController {
 	
 	private final static Logger logger = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
 
+	public AuthenticationController(UserInterface userService) {
+		this.userInterface = userService;
+	}
+	
 	AppLogger applog = new AppLogger(); 
+	
 	@Autowired
 	private UserInterface userInterface;
 	
@@ -60,23 +65,30 @@ public class AuthenticationController {
 	
 	@PostMapping("/login")
 	public ModelAndView login(@RequestParam("userMail") String email,@RequestParam("userPassword") String password,HttpServletRequest request ) {
-		Entity userlogin = userInterface.findUser(email,password);
 		ModelAndView mv = new ModelAndView();
-		mv.clear();
-		if(userlogin!=null) {
-			HttpSession session =request.getSession();
-			session.setAttribute("name",userlogin.getProperty("name"));
-			session.setAttribute("email", userlogin.getProperty("email"));
-			logger.info("User Logged In");
-			return new ModelAndView("redirect:/user/enrollcourse");
-			
+		try {
+			boolean user = userInterface.findUser(email, password);
+			mv.clear();
+			if(user) {
+				HttpSession session =request.getSession();
+				session.setAttribute("name","test");
+				session.setAttribute("email", email);
+				logger.info("User Logged In");
+				return new ModelAndView("redirect:/user/enrollcourse");
+				
+			}
+			else {
+				mv.setViewName("index");
+				mv.addObject("loginError","Invalid Credentials!");
+				logger.warning("Invalid User Credentials");
+				return mv;
+			}
 		}
-		else {
-			mv.setViewName("index");
-			mv.addObject("loginError","Invalid Credentials!");
-			logger.warning("Invalid User Credentials");
-			return mv;
+		catch(Exception e) {
+			e.printStackTrace();
+			logger.severe(e.getMessage());
 		}
+		return mv;
 		
 	}
 	
@@ -91,38 +103,45 @@ public class AuthenticationController {
 	
 	@PostMapping("/signup")
 	public ModelAndView signup(HttpServletRequest req,@Valid User user, BindingResult br) {
-		String name = req.getParameter("name");
-		String email = req.getParameter("email");
-		String password = req.getParameter("password");
 		ModelAndView mv = new ModelAndView();
-		boolean emailCheck = Pattern.matches("^[a-zA-Z0-9+_.-]+@[a-zA-Z0-9.-]+$",email);
-		boolean passwordCheck = Pattern.matches("^(?=.*[a-z]{2})(?=.*[A-Z]{2})(?=.*[!@#&()�[{}]:;',?/*~$^+=<>]{2}).{6,20}$", password);
-		mv.clear();
-		if(emailCheck==false) {
-			mv.addObject("emailError","Please Enter Valid Email");
-			logger.info("Invaild Email Error");
-		}
-		if(passwordCheck==false) {
-			mv.addObject("passwordError","Please Use Strong Password");
-			logger.info("Invalid Password Error");
-		}
-		
-		if(userInterface.checkUserMail(email)==true && emailCheck==true && passwordCheck==true) {
-			HttpSession session = req.getSession();
-			session.setAttribute("name", name);
-			session.setAttribute("email", email);			
-			userInterface.addUser(name,email,password);
-			logger.info("User Signed Up succesfull");
-			return new ModelAndView("redirect:/user/enrollcourse");
-		}
-		if(userInterface.checkUserMail(email)==false) {
-			mv.addObject("emailError","Email Already Exists, Try Login!");
-			logger.info("Email Already Exists Error");
+		try {
+			String name = req.getParameter("name");
+			String email = req.getParameter("email");
+			String password = req.getParameter("password");
+			boolean emailCheck = Pattern.matches("^[a-zA-Z0-9+_.-]+@[a-zA-Z0-9.-]+$",email);
+			boolean passwordCheck = Pattern.matches("^(?=.*[a-z]{2})(?=.*[A-Z]{2})(?=.*[!@#&()�[{}]:;',?/*~$^+=<>]{2}).{6,20}$", password);
+			mv.clear();
+			if(emailCheck==false) {
+				mv.addObject("emailError","Please Enter Valid Email");
+				logger.info("Invaild Email Error");
+			}
+			if(passwordCheck==false) {
+				mv.addObject("passwordError","Please Use Strong Password");
+				logger.info("Invalid Password Error");
+			}
+			
+			if(userInterface.checkUserMail(email)==true && emailCheck==true && passwordCheck==true) {
+				HttpSession session = req.getSession();
+				session.setAttribute("name", name);
+				session.setAttribute("email", email);
+				userInterface.addUser(name,email,password);
+				logger.info("User Signed Up succesfull");
+				return new ModelAndView("redirect:/user/enrollcourse");
+			}
+			if(userInterface.checkUserMail(email)==false) {
+				mv.addObject("emailError","Email Already Exists, Try Login!");
+				logger.info("Email Already Exists Error");
 
+			}
+			
 		}
+		catch(Exception e) {
+			mv.setViewName("index");
+			mv.addObject("signupError", "Invalid Credentials");
+			e.printStackTrace();
+		}
+		
 		return mv;
-		
-		
 	}
 	
 	@GetMapping("/logout")
@@ -132,7 +151,8 @@ public class AuthenticationController {
 			session.invalidate();
 			logger.info("User logged out");
 			response.sendRedirect("/login");
-		} catch (IOException e) {
+		} 
+		catch (IOException e) {
 			logger.warning(e.getMessage());
 		}
 	}

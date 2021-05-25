@@ -42,12 +42,17 @@ public class CourseController {
 	
 	@GetMapping("/user/enrollcourse")
 	public ModelAndView enrollcourse(HttpServletRequest req) {
-		HttpSession session = req.getSession(false);
-		String email = (String) session.getAttribute("email");
 		ModelAndView mv = new ModelAndView();
-		mv.addObject("courses", courseInterface.getAllAvailableCourses(email));
-		mv.setViewName("/user/enrollcourse");
-		logger.info("Displayed Enroll-Course Page");
+		try {
+			HttpSession session = req.getSession(false);
+			String email = (String) session.getAttribute("email");
+			mv.addObject("courses", courseInterface.getAllAvailableCourses(email));
+			mv.setViewName("/user/enrollcourse");
+			logger.info("Displayed Enroll-Course Page");
+		}
+		catch(Exception e) {
+			logger.warning(e.getMessage());
+		}
 		return mv;
 	}
 	
@@ -115,69 +120,96 @@ public class CourseController {
 	
 	@GetMapping("/user/{courseId}")
 	public ModelAndView showCourseDetails(@PathVariable int courseId) {
-		System.out.println(courseId);
 		ModelAndView mv = new ModelAndView();
-		mv.setViewName("/user/courseDetails");
-		mv.addObject("course", courseInterface.getCourseDetails(courseId));
+		try {
+			mv.setViewName("/user/courseDetails");
+			mv.addObject("course", courseInterface.getCourseDetails(courseId));
+		}
+		catch(Exception e) {
+			logger.warning(e.getMessage());
+		}
 		
 		return mv;
 	}
 	
 	@GetMapping("/user/view-course-created-by-you")
 	public ModelAndView showCoursesCreatedByUser(HttpServletRequest req) {
-		HttpSession session = req.getSession(false);
-		String email = (String) session.getAttribute("email");
 		ModelAndView mv = new ModelAndView();
-		mv.setViewName("/user/courseCreatedByUser");
-		mv.addObject("courses",courseInterface.getCourseCreatedByUser(email));
+		try {
+			HttpSession session = req.getSession(false);
+			String email = (String) session.getAttribute("email");
+			mv.setViewName("/user/courseCreatedByUser");
+			mv.addObject("courses",courseInterface.getCourseCreatedByUser(email));
+		}
+		catch(Exception e) {
+			logger.warning(e.getMessage());
+		}
+		
 		return mv;
 	}
 	
 	@PostMapping("/user/course-enroll")
 	public ModelAndView enrollCourse(HttpServletRequest req) {
-		HttpSession session = req.getSession(false);
-		String email = (String) session.getAttribute("email");
-		long courseId = Long.parseLong(req.getParameter("selectedCourse"));
 		ModelAndView mv = new ModelAndView();
-		Entity course = courseInterface.enrollCourse(email, courseId);
-		if(course!=null) {
-			mv.addObject("course",course);
-			mv.setViewName("/user/enrollCourseSuccess");
+		try {
+			HttpSession session = req.getSession(false);
+			String email = (String) session.getAttribute("email");
+			long courseId = Long.parseLong(req.getParameter("selectedCourse"));
+			Entity course = courseInterface.enrollCourse(email, courseId);
+			if(course!=null) {
+				mv.addObject("course",course);
+				mv.setViewName("/user/enrollCourseSuccess");
+			}
+			else {
+				mv.setViewName("/user/enrollCourse");
+			}
 		}
-		else {
-			mv.setViewName("/user/enrollCourse");
+		catch(Exception e) {
+			logger.warning(e.getMessage());
 		}
 		return mv;
 	}
 	
 	@GetMapping("/user/enrolled-courses")
 	public ModelAndView showEnrolledCourses(HttpServletRequest req) {
-		HttpSession session = req.getSession(false);
 		ModelAndView mv = new ModelAndView();
-		String email = (String) session.getAttribute("email");
-		mv.setViewName("/user/enrolledCourses");
-		mv.addObject("courses",courseInterface.getAllEnrolledCourses(email));
+		try {
+			HttpSession session = req.getSession(false);
+			
+			String email = (String) session.getAttribute("email");
+			mv.setViewName("/user/enrolledCourses");
+			mv.addObject("courses",courseInterface.getAllEnrolledCourses(email));
+		}
+		catch(Exception e) {
+			logger.warning(e.getMessage());
+		}
 		return mv;
-		
 	}
 	
 	@PostMapping("/user/course-uneroll")
 	public ModelAndView unerollCourse(HttpServletRequest req) {
-		String email = (String) req.getSession(false).getAttribute("email");
-		long courseId = Long.parseLong(req.getParameter("selectedCourse"));
-		Entity course = courseInterface.unenrollCourse(email, courseId);
-		if (course!=null) {
-			ModelAndView mv = new ModelAndView("redirect:/user/course-unenrolled-success/"+course.getProperty("courseName"));
-			mv.addObject("course",course);
-			System.out.println(course);
-			return mv;
+		try {
+			String email = (String) req.getSession(false).getAttribute("email");
+			long courseId = Long.parseLong(req.getParameter("selectedCourse"));
+			Entity course = courseInterface.unenrollCourse(email, courseId);
+			if (course!=null) {
+				ModelAndView mv = new ModelAndView("redirect:/user/course-unenrolled-success/"+course.getProperty("courseName"));
+				mv.addObject("course",course);
+				System.out.println(course);
+				return mv;
+			}
+			else {
+				ModelAndView mv = new ModelAndView("redirect:/user/enrolled-courses");
+				mv.addObject("Error","Error Unenrolling,Try again some time!");
+				return mv;
+				
+			}
 		}
-		else {
-			ModelAndView mv = new ModelAndView("redirect:/user/enrolled-courses");
-			mv.addObject("Error","Error Unenrolling,Try again some time!");
-			return mv;
-			
+		catch(Exception e) {
+			logger.warning(e.getMessage());
+			return new ModelAndView("redirect:/user/enrolled-courses");
 		}
+		
 	}
 	
 	@GetMapping("/user/course-unenrolled-success/{name}")
@@ -199,28 +231,32 @@ public class CourseController {
 	
 	@PostMapping("/user/update-course")
 	public ModelAndView updateCourse(HttpServletRequest req) {
-		String name = req.getParameter("courseName");
-		String price = req.getParameter("price");
-		String chapters = req.getParameter("chapters");
-		String description = req.getParameter("courseDescription");
-		long courseId = Long.parseLong(req.getParameter("courseId"));
-		HttpSession session  = req.getSession(false);
-		String email = (String)session.getAttribute("email");
-		if(courseInterface.checkCourseName(name)) {
-			boolean isUpdated = courseInterface.updateCourse(name, price, description, chapters, courseId,email);
-			if (isUpdated==true) {
-				ModelAndView mv = new ModelAndView();
-				mv.setViewName("/user/courseUpdateSuccess");
-				mv.addObject("name",name);
-				return mv;
+		ModelAndView mv = new ModelAndView();
+		try {
+			String name = req.getParameter("courseName");
+			String price = req.getParameter("price");
+			String chapters = req.getParameter("chapters");
+			String description = req.getParameter("courseDescription");
+			long courseId = Long.parseLong(req.getParameter("courseId"));
+			HttpSession session  = req.getSession(false);
+			String email = (String)session.getAttribute("email");
+			if(courseInterface.checkCourseName(name)) {
+				boolean isUpdated = courseInterface.updateCourse(name, price, description, chapters, courseId,email);
+				if (isUpdated==true) {
+					mv.setViewName("/user/courseUpdateSuccess");
+					mv.addObject("name",name);
+					return mv;
+				}
+				
 			}
-			
+			else {
+				mv.setViewName("/user/view-course-created-by-you");
+				return mv;
+				
+			}
 		}
-		else {
-			ModelAndView mv = new ModelAndView();
-			mv.setViewName("/user/view-course-created-by-you");
-			return mv;
-			
+		catch(Exception e) {
+			logger.warning(e.getMessage());
 		}
 		return null;
 		
