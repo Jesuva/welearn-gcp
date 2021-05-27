@@ -39,10 +39,6 @@ import jakarta.validation.Valid;
 public class AuthenticationController {
 	
 	private final static Logger logger = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
-
-	public AuthenticationController(UserInterface userService) {
-		this.userInterface = userService;
-	}
 	
 	AppLogger applog = new AppLogger(); 
 	
@@ -113,7 +109,7 @@ public class AuthenticationController {
 			mv.clear();
 			if(emailCheck==false) {
 				mv.addObject("emailError","Please Enter Valid Email");
-				logger.info("Invaild Email Error");
+				logger.info("Invalid Email Error");
 			}
 			if(passwordCheck==false) {
 				mv.addObject("passwordError","Please Use Strong Password");
@@ -128,7 +124,7 @@ public class AuthenticationController {
 				logger.info("User Signed Up succesfull");
 				return new ModelAndView("redirect:/user/enrollcourse");
 			}
-			if(userInterface.checkUserMail(email)==false) {
+			if(userInterface.checkUserMail(email)==false && emailCheck==true) {
 				mv.addObject("emailError","Email Already Exists, Try Login!");
 				logger.info("Email Already Exists Error");
 

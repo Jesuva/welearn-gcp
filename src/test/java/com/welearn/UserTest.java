@@ -51,12 +51,6 @@ public class UserTest {
 
 	@Rule public MockitoRule rule = MockitoJUnit.rule();
 	
-	@Before
-	public void setUp() {
-		authenticationController = new AuthenticationController(userInterface);
-
-	}
-	
 	public void setMockSession() {
 		try {
 			when(req.getSession()).thenReturn(session);
@@ -95,7 +89,7 @@ public class UserTest {
 	}
 	
 	@Test
-	public void success_signupTest() {
+	public void signupTestWithCorrectValues() {
 		try {			
 			setMockSession();
 			PowerMockito.when(req.getParameter("name")).thenReturn("jesuva");
@@ -110,18 +104,60 @@ public class UserTest {
 		}
 	}
 	
-	@Test 
-	public void success_logout() {
+	@Test
+	public void signupTestWithInvalidEmailFormat() {
 		try {
-			setMockSession();
-			session.invalidate();
+			PowerMockito.when(req.getParameter("name")).thenReturn("jesuva");
+			when(req.getParameter("email")).thenReturn("test");
+			when(req.getParameter("password")).thenReturn("asDF!@");
+			when(userInterface.checkUserMail("test")).thenReturn(false);
+			assertEquals(true,authenticationController.signup(req, null, null).getModel().containsKey("emailError"));
 		}
 		catch(Exception e) {
-			e.printStackTrace();
+			logger.warning(e.getMessage());
+		}
+	}
+	
+	@Test
+	public void signupTestWithInvalidPasswordFormat() {
+		try {
+			PowerMockito.when(req.getParameter("name")).thenReturn("jesuva");
+			when(req.getParameter("email")).thenReturn("test@testing.com");
+			when(req.getParameter("password")).thenReturn("asdfqw");
+			when(userInterface.checkUserMail("test")).thenReturn(true);
+			assertEquals(true,authenticationController.signup(req, null, null).getModel().containsKey("passwordError"));
+		}
+		catch(Exception e) {
+			logger.warning(e.getMessage());
+		}
+	}
+	
+	@Test
+	public void signupTestWithBothInvalidEmailAndPassword() {
+		try {
+			PowerMockito.when(req.getParameter("name")).thenReturn("jesuva");
+			when(req.getParameter("email")).thenReturn("test");
+			when(req.getParameter("password")).thenReturn("asdfqw");
+			when(userInterface.checkUserMail("test")).thenReturn(false);
+			assertTrue(authenticationController.signup(req,null,null).getModel().containsKey("emailError") && 
+					authenticationController.signup(req,null,null).getModel().containsKey("passwordError") );
+		}
+		catch(Exception e) {
+			logger.warning(e.getMessage());
+		}
+	}
+	
+	@Test
+	public void signupTestWithExistingEmail() {
+		try {
+			PowerMockito.when(req.getParameter("name")).thenReturn("jesuva");
+			when(req.getParameter("email")).thenReturn("test@testing.com");
+			when(req.getParameter("password")).thenReturn("asDF@#");
+			when(userInterface.checkUserMail("test")).thenReturn(false);
+			assertEquals(true,authenticationController.signup(req, null, null).getModel().containsKey("emailError"));
+		}
+		catch(Exception e) {
+			logger.warning(e.getMessage());
 		}
 	}
 }
-
-//static method over instance method
-//protocols 
-//try catch block

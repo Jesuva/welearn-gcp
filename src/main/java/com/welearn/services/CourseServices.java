@@ -174,34 +174,39 @@ public class CourseServices extends JdbcDaoSupport implements CourseInterface {
 		}
 	}
 	public boolean checkCourseName(String name) {
-		Query validCourseName = new Query("Course").
-			    setFilter(new Query.FilterPredicate("courseName", 
-			                  Query.FilterOperator.EQUAL,
-			                  name)
-			    ).setKeysOnly();
-			Entity courseEntity = datastore.prepare(validCourseName).asSingleEntity();
-		if (courseEntity==null) {
-			System.out.print("null");
-			return true;
+		try {
+			Query validCourseName = new Query("Course").
+				    setFilter(new Query.FilterPredicate("courseName", 
+				                  Query.FilterOperator.EQUAL,
+				                  name)
+				    ).setKeysOnly();
+				Entity courseEntity = datastore.prepare(validCourseName).asSingleEntity();
+			if (courseEntity==null) {
+				return true;
+			}
 		}
-		else {
-			System.out.print("not null");
-			return false;
+		catch(Exception e) {
+			logger.warning(e.getMessage());
 		}
-		
+		return false;
 	}
 
 	public Entity getCourseDetails(long courseId) {
-		Key courseKey = KeyFactory.createKey("Course", courseId);
-		Query validuserquery = new Query("Course").
-			    setFilter(new Query.FilterPredicate(Entity.KEY_RESERVED_PROPERTY, 
-			                  Query.FilterOperator.EQUAL,
-			                  courseKey)
-			    );
-			Entity anyentity = datastore.prepare(validuserquery).asSingleEntity();
-		
-		return anyentity;
-		
+		try {
+			Key courseKey = KeyFactory.createKey("Course", courseId);
+			Query validuserquery = new Query("Course").
+				    setFilter(new Query.FilterPredicate(Entity.KEY_RESERVED_PROPERTY, 
+				                  Query.FilterOperator.EQUAL,
+				                  courseKey)
+				    );
+				Entity anyentity = datastore.prepare(validuserquery).asSingleEntity();
+				return anyentity;
+
+		}
+		catch(Exception e) {
+			logger.warning(e.getMessage());
+			return null;
+		}		
 	}
 	
 	public List<Entity> getCourseCreatedByUser(String name){
